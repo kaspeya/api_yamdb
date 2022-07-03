@@ -49,16 +49,16 @@ python3 manage.py runserver
 в ответе на запрос ему приходит token (JWT-токен).
 
 ### Некоторые примеры запросов к API:
-# Документация в формате [ReDoc](http://127.0.0.1:8000/redoc/).
+#### Документация в формате [ReDoc](http://127.0.0.1:8000/redoc/).
 
 ```
-# Примеры запросов:
+#### Примеры запросов:
 | CRUD      | Эндпоинты | Что получаем | 
 | --- | --- | --- |
-| 'POST'    | /api/v1/auth/signup/                    | Регистрация.           |
-| 'POST'    | /api/v1/auth/token/                     | Получение токена.      |
+| 'POST'    | /api/v1/auth/signup/                    | Регистрация.                           |
+| 'POST'    | /api/v1/auth/token/                     | Получение токена.                      |
 | 'GET'     | /api/v1/users/me/                       | Получение данных своей учетной записи. |
 | 'PATCH'   | /api/v1/users/me/                       | Изменение данных своей учетной записи. |
-| 'GET'     | /api/v1/titles/{title_id}/reviews/      | Получение отзывов.           |
-| 'POST'    | /api/v1/titles/{title_id}/reviews/      | Добавление отзывов.          |
-| 'DELETE'  | /api/v1/titles/{title_id}/reviews/      | Удаление отзывов.            |
+| 'GET'     | /api/v1/titles/{title_id}/reviews/      | Получение отзывов.                     |
+| 'POST'    | /api/v1/titles/{title_id}/reviews/      | Добавление отзывов.                    |
+| 'DELETE'  | /api/v1/titles/{title_id}/reviews/      | Удаление отзывов.                      |
