@@ -29,23 +29,12 @@ class UserSerializer(serializers.ModelSerializer):
             confirmation_code=confirmation_code
         )
 
-    def validate_username(self, name):
-        if name == settings.USER_ME:
+    def validate(self, value):
+        if value is None or value == '':
             raise serializers.ValidationError(
-                'Имя "me" не может быть использовано!'
+                f'Поле {value} обязательно для заполнения!'
             )
-        elif name is None or name == "":
-            raise serializers.ValidationError(
-                'Поле "name" обязательно для заполнения!'
-            )
-        return name
-
-    def validate_email(self, email):
-        if email is None or email == "":
-            raise serializers.ValidationError(
-                'Поле "email" обязательно для заполнения!'
-            )
-        return email
+        return value
 
 
 class MeSerializer(UserSerializer):
@@ -53,7 +42,7 @@ class MeSerializer(UserSerializer):
 
 
 class SignUpSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    email = serializers.EmailField(max_length=254, required=True)
     username = serializers.CharField(max_length=150)
 
     def validate_username(self, name):
@@ -63,38 +52,10 @@ class SignUpSerializer(serializers.Serializer):
             )
         return name
 
-    def validate(self, data):
-        username = data.get('username')
-        email = data.get('email')
-        if (
-            User.objects.filter(username=username).exists()
-            and User.objects.get(username=username).email != email
-        ):
-            raise serializers.ValidationError('Это имя уже существует!')
-        if (
-            User.objects.filter(email=email).exists()
-            and User.objects.get(email=email).username != username
-        ):
-            raise serializers.ValidationError('Этот email уже существует!')
-        return data
-
 
 class AuthSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
     confirmation_code = serializers.CharField(max_length=255)
-
-    def validate(self, data):
-        username = data.get('username')
-        confirmation_code = data.get('confirmation_code')
-        if username is None:
-            raise serializers.ValidationError(
-                'Требуется ввести имя'
-            )
-        if confirmation_code is None:
-            raise serializers.ValidationError(
-                'Требуется ввести код подтверждения'
-            )
-        return data
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -124,6 +85,15 @@ class TitleSerializerRead(serializers.ModelSerializer):
             'category',
             'genre')
         model = Title
+        read_only_fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'genre',
+            'category'
+        )
 
     def get_rating(self, obj):
         score = obj.reviews.all().aggregate(Avg('score')).get(
@@ -163,15 +133,9 @@ class ReviewSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = ('id', 'text', 'author', 'score', 'pub_date')
+        fields = '__all__'
         model = Review
-        validators = [
-            serializers.UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=('id', 'author'),
-                message="Review must be unique for author"
-            )
-        ]
+        read_only_fields = ['title']
 
     def validate(self, data):
         if self.context['request'].method not in ('POST',):
@@ -179,7 +143,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         title_id = self.context['view'].kwargs.get('title_id')
         author = self.context['request'].user
         if Review.objects.filter(author=author, title=title_id).exists():
-            raise serializers.ValidationError('Review already exists')
+            raise serializers.ValidationError(
+                'Нельзя оставлять отзыв на произведение дважды!'
+            )
         return data
 
 

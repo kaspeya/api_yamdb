@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import IntegrityError
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, status, viewsets
@@ -53,10 +54,16 @@ def sign_up(request):
     serializer.is_valid(raise_exception=True)
     email = serializer.validated_data['email']
     confirmation_code = str(uuid.uuid3(uuid.NAMESPACE_X500, email))
-    user, created = User.objects.get_or_create(
-        **serializer.validated_data,
-        confirmation_code=confirmation_code
-    )
+    try:
+        user, created = User.objects.get_or_create(
+            **serializer.validated_data,
+            confirmation_code=confirmation_code
+        )
+    except IntegrityError:
+        return Response(
+            'Такой логин или email уже существуют',
+            status=status.HTTP_400_BAD_REQUEST
+        )
     send_mail(
         subject=settings.DEFAULT_EMAIL_SUBJECT,
         message=user.confirmation_code,
@@ -80,12 +87,14 @@ def get_token(request):
                     status=status.HTTP_200_OK)
 
 
-class CategoryViewSet(
-        mixins.CreateModelMixin,
-        mixins.ListModelMixin,
-        mixins.DestroyModelMixin,
-        viewsets.GenericViewSet):
+class ListCreateDestroyViewSet(mixins.CreateModelMixin,
+                               mixins.DestroyModelMixin,
+                               mixins.ListModelMixin,
+                               viewsets.GenericViewSet):
+    pass
 
+
+class CategoryViewSet(ListCreateDestroyViewSet):
     queryset = Category.objects.all().order_by('id')
     serializer_class = CategorySerializer
     permission_classes = (IsAdminOrReadOnly,)
@@ -99,12 +108,7 @@ class CategoryViewSet(
         return (IsAdmin(),)
 
 
-class GenreViewSet(
-        mixins.CreateModelMixin,
-        mixins.ListModelMixin,
-        mixins.DestroyModelMixin,
-        viewsets.GenericViewSet):
-
+class GenreViewSet(ListCreateDestroyViewSet):
     queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, IsAdminOrReadOnly,)
@@ -152,7 +156,11 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (ReadAnyoneChangeIfIsOwnerAdminModerator,)
 
     def get_queryset(self, *args, **kwargs):
-        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        try:
+            review = title.reviews.get(id=self.kwargs.get('review_id'))
+        except TypeError:
+            TypeError('У произведения нет такого отзыва')
         return review.comments.all()
 
     def perform_create(self, serializer):

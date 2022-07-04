@@ -1,28 +1,28 @@
 from django.db import models
 
 from users.models import User
-from .validators import validate_score
+from .validators import validate_score, validate_year
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    name = models.CharField(max_length=256)
+    slug = models.SlugField(max_length=50, unique=True)
 
     class Meta:
-        verbose_name_plural = 'Categories'
+        verbose_name = 'категории'
 
     def __str__(self) -> str:
         return self.name
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    name = models.CharField(max_length=256)
+    slug = models.SlugField(max_length=50, unique=True)
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=200)
-    year = models.IntegerField()
+    name = models.TextField()
+    year = models.IntegerField(validators=[validate_year],)
     description = models.TextField(
         null=True,
         blank=True
