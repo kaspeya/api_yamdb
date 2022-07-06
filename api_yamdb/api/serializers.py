@@ -17,7 +17,8 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'bio',
-            'role')
+            'role'
+        )
         model = User
 
     def create(self, validated_data):
@@ -80,7 +81,8 @@ class TitleSerializer(serializers.ModelSerializer):
             'year',
             'description',
             'category',
-            'genre')
+            'genre'
+        )
         model = Title
 
 
@@ -97,27 +99,22 @@ class TitleSerializerRead(serializers.ModelSerializer):
             'rating',
             'description',
             'category',
-            'genre')
-        model = Title
-        read_only_fields = (
-            'id',
-            'name',
-            'year',
-            'rating',
-            'description',
-            'genre',
-            'category'
+            'genre'
         )
+        model = Title
+        read_only_fields = fields
 
 
 class TitleSerializerWrite(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
         queryset=Category.objects.all(),
-        slug_field='slug')
+        slug_field='slug'
+    )
     genre = serializers.SlugRelatedField(
         queryset=Genre.objects.all(),
         slug_field='slug',
-        many=True)
+        many=True
+    )
 
     class Meta:
         fields = ('name', 'year', 'description', 'category', 'genre')

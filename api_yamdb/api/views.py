@@ -7,8 +7,7 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -87,16 +86,11 @@ def get_token(request):
                     status=status.HTTP_200_OK)
 
 
-class ListCreateDestroyViewSet(mixins.CreateModelMixin,
-                               mixins.DestroyModelMixin,
-                               mixins.ListModelMixin,
-                               viewsets.GenericViewSet):
-    pass
-
-
-class CategoryViewSet(ListCreateDestroyViewSet):
-    queryset = Category.objects.all().order_by('id')
-    serializer_class = CategorySerializer
+class ListCreateDestroyViewSet(
+        mixins.CreateModelMixin,
+        mixins.DestroyModelMixin,
+        mixins.ListModelMixin,
+        viewsets.GenericViewSet):
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
@@ -108,18 +102,14 @@ class CategoryViewSet(ListCreateDestroyViewSet):
         return (IsAdmin(),)
 
 
+class CategoryViewSet(ListCreateDestroyViewSet):
+    queryset = Category.objects.all().order_by('id')
+    serializer_class = CategorySerializer
+
+
 class GenreViewSet(ListCreateDestroyViewSet):
     queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly, IsAdminOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
-    lookup_field = 'slug'
-
-    def get_permissions(self):
-        if self.action == 'list':
-            return (AllowAny(),)
-        return (IsAdmin(),)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -165,4 +155,6 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+        if str(review.title.id) != self.kwargs.get('title_id'):
+            raise ValueError('Некорректный title')
         serializer.save(author=self.request.user, review=review)

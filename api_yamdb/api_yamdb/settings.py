@@ -32,7 +32,6 @@ INSTALLED_APPS = [
     'users',
     'api',
     'reviews',
-    'dotenv',
 ]
 
 MIDDLEWARE = [
