@@ -94,34 +94,34 @@ class UserViewSet(viewsets.ModelViewSet):
         return super(UserViewSet, self).get_permissions()
 
 
-class CategoryViewSet(
+class ListCreateDestroyViewSet(
         mixins.CreateModelMixin,
-        mixins.ListModelMixin,
         mixins.DestroyModelMixin,
+        mixins.ListModelMixin,
         viewsets.GenericViewSet):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
 
+    def get_permissions(self):
+        if self.action == 'list':
+            return (AllowAny(),)
+        return (IsAdmin(),)
 
-class GenreViewSet(
-        mixins.CreateModelMixin,
-        mixins.ListModelMixin,
-        mixins.DestroyModelMixin,
-        viewsets.GenericViewSet):
-    queryset = Genre.objects.all()
+
+class CategoryViewSet(ListCreateDestroyViewSet):
+    queryset = Category.objects.all().order_by('id')
+    serializer_class = CategorySerializer
+
+
+class GenreViewSet(ListCreateDestroyViewSet):
+    queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly, IsAdminOrReadOnly,)
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
-    lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(rating=Avg('reviews__score')).all()
+    queryset = Title.objects.annotate(rating=Avg('reviews__score'))
     permission_classes = (IsAuthenticatedOrReadOnly, IsAdminOrReadOnly)
     filterset_class = TitleFilter
 
@@ -149,9 +149,15 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (ReadAnyoneChangeIfIsOwnerAdminModerator,)
 
     def get_queryset(self, *args, **kwargs):
-        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        try:
+            review = title.reviews.get(id=self.kwargs.get('review_id'))
+        except TypeError:
+            TypeError('У произведения нет такого отзыва')
         return review.comments.all()
 
     def perform_create(self, serializer):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+        if str(review.title.id) != self.kwargs.get('title_id'):
+            raise ValueError("Некорректный title")
         serializer.save(author=self.request.user, review=review)

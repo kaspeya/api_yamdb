@@ -1,4 +1,3 @@
-from django.db.models import Avg
 from django.contrib.auth import get_user_model
 from rest_framework import serializers, exceptions
 from django.contrib.auth.tokens import default_token_generator
@@ -120,10 +119,26 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
+class TitleSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(read_only=True, many=True)
+    category = CategorySerializer(read_only=True)
+
+    class Meta:
+        fields = (
+            'id',
+            'name',
+            'year',
+            'description',
+            'category',
+            'genre')
+        model = Title
+
+
 class TitleSerializerRead(serializers.ModelSerializer):
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField()
+    # rating = serializers.SerializerMethodField()
 
     class Meta:
         fields = (
@@ -136,12 +151,12 @@ class TitleSerializerRead(serializers.ModelSerializer):
             'genre')
         model = Title
 
-    def get_rating(self, obj):
-        score = obj.reviews.all().aggregate(Avg('score')).get(
-            'score__avg')
-        if score:
-            return int(score)
-        return None
+    # def get_rating(self, obj):
+        # score = obj.reviews.all().aggregate(Avg('score')).get(
+        #     'score__avg')
+        # if score:
+        #     return int(score)
+        # return None
 
 
 class TitleSerializerWrite(serializers.ModelSerializer):
@@ -158,7 +173,7 @@ class TitleSerializerWrite(serializers.ModelSerializer):
         model = Title
 
     def to_representation(self, instance):
-        serializer = TitleSerializerRead(instance)
+        serializer = TitleSerializer(instance)
         return serializer.data
 
 

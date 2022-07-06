@@ -23,6 +23,19 @@ class Genre(models.Model):
     slug = models.SlugField(unique=True)
 
 
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    title = models.ForeignKey('Title', on_delete=models.CASCADE)
+
+    class Meta:
+        models.constraints.UniqueConstraint(
+            fields=('genre', 'title'), name='unique_genre_title'
+        )
+
+    def __str__(self):
+        return f'{self.genre.name[:20]}-{self.title.name[:20]}'
+
+
 class Title(models.Model):
     name = models.CharField(max_length=200)
     year = models.IntegerField()
@@ -30,7 +43,9 @@ class Title(models.Model):
         null=True,
         blank=True
     )
-    genre = models.ManyToManyField(Genre)
+    genre = models.ManyToManyField(
+        Genre,
+        through=GenreTitle)
     category = models.ForeignKey(
         Category,
         related_name='titles',
