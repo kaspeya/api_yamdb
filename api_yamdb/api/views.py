@@ -150,7 +150,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         try:
             review = title.reviews.get(id=self.kwargs.get('review_id'))
         except TypeError:
-            TypeError('У произведения нет такого отзыва')
+            raise TypeError('У произведения нет такого отзыва')
         return review.comments.all()
 
     def perform_create(self, serializer):
