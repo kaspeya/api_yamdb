@@ -36,6 +36,19 @@ class Title(models.Model):
         on_delete=models.SET_NULL)
 
 
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    title = models.ForeignKey('Title', on_delete=models.CASCADE)
+
+    class Meta:
+        models.constraints.UniqueConstraint(
+            fields=('genre', 'title'), name='unique_genre_title'
+        )
+
+    def __str__(self):
+        return f'{self.genre.name[:20]}-{self.title.name[:20]}'
+
+
 class Review(models.Model):
     title = models.ForeignKey(
         Title,
