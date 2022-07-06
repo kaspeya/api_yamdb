@@ -42,7 +42,6 @@ python3 manage.py runserver
 ``` 
 python manage.py filldatabase 
 ``` 
-``` 
 
 
 ### Самостоятельная регистрация новых пользователей: 
