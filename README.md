@@ -1,4 +1,4 @@
-# YaMDb(docker-compose)
+# Документация к API проекта «YaMDb» (v1) 
 
 
 ## Описание: 
@@ -6,66 +6,67 @@
 Реализация API сервиса проекта YaMDb для обмена данными на базе DRF. Проект YaMDb cобирает отзывы (Review) пользователей на произведения (Titles). Произведения делятся на категории (Category): «Книги», «Фильмы», «Музыка». Сами произведения в YaMDb не хранятся, здесь нельзя посмотреть фильм или послушать музыку. 
 Произведению может быть присвоен жанр (Genre) из списка предустановленных (например, «Сказка», «Рок» или «Артхаус»). Новые жанры может создавать только администратор. Пользовательские оценки формируют рейтинг. На одно произведение пользователь может оставить только один отзыв. 
 
-## Как запустить проект: 
+ 
+### Как запустить проект: 
 
-### Шаблон наполнения env-файла ( расположение файла - infra/.env ):
-``` 
-SECRET_KEY=default-key
-DB_ENGINE=django.db.backends.postgresql
-DB_NAME=postgres
-POSTGRES_USER=login
-POSTGRES_PASSWORD=password
-DB_HOST=db
-DB_PORT=5432
-```
-
-### Установка
-Для запуска приложения проделайте следующие шаги:
-
-
-Склонируйте репозиторий:
+Клонировать репозиторий и перейти в корневую папку проекта: 
 ``` 
 git clone 
 ``` 
-Перейдити в папку infra, создайте файл .env, заполните его данными из шаблона выше и запустите docker-compose.yaml (при установленном и запущенном Docker):
 ``` 
-docker-compose up
+cd api_yamdb 
 ``` 
-Для пересборки контейнеров выполните команду:
+Cоздать и активировать виртуальное окружение: 
 ``` 
-docker-compose up -d --build
+python3 -m venv env 
 ``` 
-В контейнере web выполните миграции:
 ``` 
-docker-compose exec web python manage.py migrate
+source env/bin/activate 
 ``` 
-Создатйте суперпользователя:
+Установить зависимости из файла requirements.txt: 
 ``` 
-docker-compose exec web python manage.py createsuperuser
+python3 -m pip install --upgrade pip 
 ``` 
-Соберите статику:
 ``` 
-docker-compose exec web python manage.py collectstatic --no-input
+pip install -r requirements.txt 
 ``` 
-Проект запущен и доступен по адресу: localhost
-
-
-### Загрузка тестовых значений в БД:
-
-
-Чтобы загрузить тестовые значения в базу данных перейдите в каталог проекта и скопируйте файл базы данных в контейнер приложения:
+Выполнить миграции: 
 ``` 
-docker cp <DATA BASE> <CONTAINER ID>:/app/<DATA BASE>
+python3 manage.py migrate 
 ``` 
-Перейдите в контейнер приложения и загрузить данные в БД:
+Запустить проект: 
+``` 
+python3 manage.py runserver 
+``` 
+Загрузка тестовой базы: 
+``` 
+python manage.py filldatabase 
 ``` 
 
-docker container exec -it <CONTAINER ID> bash
-```
-```
-python manage.py loaddata <DATA BASE> 
-``` 
 
-При необходимости возможно импортировать тестовые данные:
-```
-docker-compose exec web python manage.py loaddata fixtures.json
+### Самостоятельная регистрация новых пользователей: 
+
+Пользователь отправляет POST-запрос с параметрами email и username на эндпоинт /api/v1/auth/signup/. 
+Сервис YaMDB отправляет письмо с кодом подтверждения (confirmation_code) на указанный адрес email.
+Пользователь отправляет POST-запрос с параметрами username и confirmation_code на эндпоинт /api/v1/auth/token/,
+в ответе на запрос ему приходит token (JWT-токен). 
+
+ 
+### Некоторые примеры запросов к API: 
+
+ 
+#### Документация в формате [ReDoc](http://127.0.0.1:8000/redoc/). 
+
+ 
+#### Примеры запросов: 
+
+| CRUD      | Эндпоинты | Что получаем |  
+| --- | --- | --- | 
+| 'POST'    | /api/v1/auth/signup/                    | Регистрация.                           | 
+| 'POST'    | /api/v1/auth/token/                     | Получение токена.                      | 
+| 'GET'     | /api/v1/users/me/                       | Получение данных своей учетной записи. | 
+| 'PATCH'   | /api/v1/users/me/                       | Изменение данных своей учетной записи. | 
+| 'GET'     | /api/v1/titles/{title_id}/reviews/      | Получение отзывов.                     | 
+| 'POST'    | /api/v1/titles/{title_id}/reviews/      | Добавление отзывов.                    | 
+| 'DELETE'  | /api/v1/titles/{title_id}/reviews/      | Удаление отзывов.                      |
+
